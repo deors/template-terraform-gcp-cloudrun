@@ -8,9 +8,9 @@ output "log_bucket_id" {
   value       = google_logging_project_bucket_config.app.id
 }
 
-output "log_sink_writer_identity" {
-  description = "Service identity the log sink writes with"
-  value       = google_logging_project_sink.app.writer_identity
+output "log_sink_name" {
+  description = "Name of the log sink routing the Cloud Run service logs to the bucket"
+  value       = google_logging_project_sink.app.name
 }
 
 output "alert_policy_ids" {

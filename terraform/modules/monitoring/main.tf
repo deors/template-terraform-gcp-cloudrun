@@ -28,7 +28,7 @@ resource "google_logging_project_bucket_config" "app" {
 }
 
 # The filter matches the service name the cloudrun module derives from the
-# same prefix.
+# same prefix. Same-project bucket destinations need no writer grant.
 resource "google_logging_project_sink" "app" {
   project     = var.project_id
   name        = "sink-run-${local.prefix}"
@@ -37,12 +37,6 @@ resource "google_logging_project_sink" "app" {
   filter = "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"${local.prefix}\""
 
   unique_writer_identity = true
-}
-
-resource "google_project_iam_member" "sink_writer" {
-  project = var.project_id
-  role    = "roles/logging.bucketWriter"
-  member  = google_logging_project_sink.app.writer_identity
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
