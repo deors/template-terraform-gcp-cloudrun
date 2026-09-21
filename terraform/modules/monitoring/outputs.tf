@@ -1,5 +1,5 @@
 output "log_bucket_name" {
-  description = "Short name (bucket_id) of the Cloud Logging bucket for application logs"
+  description = "Short name (bucket_id) of the Cloud Logging bucket for application logs: run-<name>-<environment>-<suffix>"
   value       = google_logging_project_bucket_config.app.bucket_id
 }
 

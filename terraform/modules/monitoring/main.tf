@@ -19,10 +19,16 @@ locals {
 # Cloud Logging
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Deleted buckets stay reserved for 7 days; a fixed ID would block re-creation
+# inside that window, so each apply gets a fresh suffix.
+resource "random_id" "log_bucket" {
+  byte_length = 2
+}
+
 resource "google_logging_project_bucket_config" "app" {
   project        = var.project_id
   location       = var.location
-  bucket_id      = "run-${local.prefix}"
+  bucket_id      = "run-${local.prefix}-${random_id.log_bucket.hex}"
   description    = "Cloud Run application logs for ${local.prefix}"
   retention_days = var.log_retention_days
 }
