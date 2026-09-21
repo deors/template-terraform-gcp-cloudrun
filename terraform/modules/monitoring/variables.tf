@@ -46,7 +46,7 @@ variable "enable_trace" {
 }
 
 variable "trace_sampling_rate" {
-  description = "Trace sampling rate as a decimal fraction (0.0–1.0). dev=1.0, staging=0.10, prod=0.01. Cloud Trace has no server-side sampling resource: the rate is enforced client-side, surfaced to the container through the trace_env_vars output (OpenTelemetry convention)."
+  description = "Trace sampling rate as a decimal fraction (0.0–1.0). dev=1.0, staging=0.10, prod=0.01. Enforced client-side; surfaced to the container through the trace_env_vars output."
   type        = number
   default     = 1.0
   validation {
