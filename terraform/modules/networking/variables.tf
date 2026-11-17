@@ -87,3 +87,21 @@ variable "private_zone_domain" {
   type        = string
   default     = ""
 }
+
+variable "main_domain" {
+  description = "Root domain with a public Cloud DNS zone in the project. When set, enables custom-domain access to the application at <name>.<environment>.<main_domain>. Leave empty for default service URLs only."
+  type        = string
+  default     = ""
+}
+
+variable "private_app_dns" {
+  description = "Publish the application FQDN in a VPC-private zone (split-horizon) instead of the public zone. Set true for environments behind an internal load balancer (staging, prod), false for an external one (dev). Only effective when main_domain is set."
+  type        = bool
+  default     = true
+}
+
+variable "proxy_only_subnet_cidr" {
+  description = "CIDR block for the proxy-only subnet used by the regional load balancer (/26 or larger, /23 recommended). dev=10.10.4.0/23, staging=10.20.4.0/23, prod=10.30.4.0/23. Only used when main_domain is set."
+  type        = string
+  default     = "10.10.4.0/23"
+}

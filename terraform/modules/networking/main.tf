@@ -13,6 +13,15 @@ locals {
 
   private_zone_domain = var.private_zone_domain != "" ? var.private_zone_domain : "${lower(var.name)}.${var.environment}.internal."
 
+  custom_domain    = var.main_domain != ""
+  app_fqdn         = local.custom_domain ? "${lower(var.name)}.${var.environment}.${var.main_domain}" : ""
+  private_app_zone = local.custom_domain && var.private_app_dns
+
+  public_zone_name = local.custom_domain ? one([
+    for z in data.google_dns_managed_zones.this[0].managed_zones : z.name
+    if z.dns_name == "${var.main_domain}." && z.visibility == "public"
+  ]) : null
+
   flow_log_config = {
     aggregation_interval = "INTERVAL_5_MIN"
     flow_sampling        = var.flow_log_sampling
@@ -77,6 +86,26 @@ resource "google_compute_subnetwork" "connector" {
     aggregation_interval = local.flow_log_config.aggregation_interval
     flow_sampling        = local.flow_log_config.flow_sampling
     metadata             = local.flow_log_config.metadata
+  }
+}
+
+# Required by regional Application Load Balancers (internal and external).
+resource "google_compute_subnetwork" "proxy_only" {
+  count = local.custom_domain ? 1 : 0
+
+  project       = var.project_id
+  name          = "snet-proxy-${local.prefix}"
+  region        = var.region
+  network       = google_compute_network.this.id
+  ip_cidr_range = var.proxy_only_subnet_cidr
+  purpose       = "REGIONAL_MANAGED_PROXY"
+  role          = "ACTIVE"
+
+  lifecycle {
+    precondition {
+      condition     = local.public_zone_name != null
+      error_message = "main_domain is set but no public Cloud DNS zone for it exists in the project."
+    }
   }
 }
 
@@ -199,6 +228,30 @@ resource "google_dns_managed_zone" "private" {
   name        = "zone-${local.prefix}"
   dns_name    = local.private_zone_domain
   description = "Private zone for ${local.prefix} internal services"
+  visibility  = "private"
+
+  private_visibility_config {
+    networks {
+      network_url = google_compute_network.this.id
+    }
+  }
+
+  labels = local.base_labels
+}
+
+data "google_dns_managed_zones" "this" {
+  count   = local.custom_domain ? 1 : 0
+  project = var.project_id
+}
+
+# Split-horizon zone: the application FQDN resolves only inside the VPC.
+resource "google_dns_managed_zone" "private_app" {
+  count = local.private_app_zone ? 1 : 0
+
+  project     = var.project_id
+  name        = "zone-app-${local.prefix}"
+  dns_name    = "${local.app_fqdn}."
+  description = "Private zone for the ${local.prefix} application FQDN"
   visibility  = "private"
 
   private_visibility_config {
