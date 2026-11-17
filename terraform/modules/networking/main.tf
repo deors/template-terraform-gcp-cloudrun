@@ -2,6 +2,7 @@ locals {
   prefix = lower("${var.name}-${var.environment}")
 
   base_labels = merge(var.labels, {
+    application = lower(var.name)
     environment = var.environment
     managed-by  = "terraform"
     platform    = "platform-engineering"
