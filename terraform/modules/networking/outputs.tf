@@ -11,9 +11,10 @@ output "network_name" {
 output "subnet_ids" {
   description = "Map of subnet role to subnet ID"
   value = {
-    app       = google_compute_subnetwork.app.id
-    services  = google_compute_subnetwork.services.id
-    connector = google_compute_subnetwork.connector.id
+    app        = google_compute_subnetwork.app.id
+    services   = google_compute_subnetwork.services.id
+    connector  = google_compute_subnetwork.connector.id
+    proxy_only = one(google_compute_subnetwork.proxy_only[*].id)
   }
 }
 
@@ -64,4 +65,24 @@ output "nat_name" {
 output "router_name" {
   description = "Name of the Cloud Router"
   value       = google_compute_router.this.name
+}
+
+output "proxy_only_subnet_id" {
+  description = "ID of the proxy-only subnet (null when main_domain is empty)"
+  value       = one(google_compute_subnetwork.proxy_only[*].id)
+}
+
+output "app_fqdn" {
+  description = "Application FQDN <name>.<environment>.<main_domain> (empty when main_domain is empty)"
+  value       = local.app_fqdn
+}
+
+output "app_dns_zone_name" {
+  description = "Name of the Cloud DNS zone that holds the application A record: the private app zone or the public zone (null when main_domain is empty)"
+  value       = local.private_app_zone ? google_dns_managed_zone.private_app[0].name : local.public_zone_name
+}
+
+output "public_dns_zone_name" {
+  description = "Name of the public Cloud DNS zone for main_domain, used for certificate DNS authorization records (null when main_domain is empty)"
+  value       = local.public_zone_name
 }
