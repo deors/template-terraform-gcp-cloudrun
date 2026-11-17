@@ -179,14 +179,8 @@ variable "auth_members" {
   }
 }
 
-variable "auth_programmatic_client_id" {
-  description = "Project-level OAuth client ID registered as programmatic client in the service's IAP settings; ID tokens for programmatic access use it as audience. Leave empty to skip."
-  type        = string
-  default     = ""
-}
-
 variable "auth_test_identity_impersonators" {
-  description = "Principals (IAM member format) allowed to mint ID tokens for the test identity, e.g. the CI/CD service account"
+  description = "Principals (IAM member format) allowed to sign JWTs as the test identity, e.g. the CI/CD service account"
   type        = list(string)
   default     = []
 }

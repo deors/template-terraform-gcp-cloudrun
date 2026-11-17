@@ -35,7 +35,7 @@ output "traffic_split_enabled" {
 
 output "app_url" {
   description = "Primary application URL: https://<app_fqdn> when a custom domain is configured, otherwise the run.app URL"
-  value       = local.custom_domain ? "https://${var.app_fqdn}" : google_cloud_run_v2_service.this.uri
+  value       = local.app_url
 }
 
 output "app_fqdn" {
@@ -62,12 +62,12 @@ output "auth_test_identity_email" {
   value       = google_service_account.test_identity.email
 }
 
-output "auth_programmatic_client_id" {
-  description = "OAuth client ID registered for programmatic access (empty when not configured)"
-  value       = var.auth_programmatic_client_id
+output "auth_token_audience" {
+  description = "Audience of the test identity's signed JWT: <app_url>/*. A token is valid only for the URL it names."
+  value       = local.token_audience
 }
 
 output "auth_token_command" {
-  description = "Command that mints an ID token for the test identity; send it as 'Authorization: Bearer <token>'"
-  value       = "gcloud auth print-identity-token --impersonate-service-account=${google_service_account.test_identity.email} --audiences=${local.programmatic_access ? var.auth_programmatic_client_id : google_cloud_run_v2_service.this.uri} --include-email"
+  description = "Shell command that prints a 10-minute JWT signed by the test identity for app_url; send it as 'Authorization: Bearer <token>'"
+  value       = "printf '{\"iss\":\"${google_service_account.test_identity.email}\",\"sub\":\"${google_service_account.test_identity.email}\",\"aud\":\"${local.token_audience}\",\"iat\":%s,\"exp\":%s}' \"$(date +%s)\" \"$(($(date +%s)+600))\" | gcloud iam service-accounts sign-jwt --iam-account=${google_service_account.test_identity.email} --quiet /dev/stdin /dev/stdout 2>/dev/null"
 }

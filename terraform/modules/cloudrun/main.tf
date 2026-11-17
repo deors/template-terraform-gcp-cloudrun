@@ -16,16 +16,17 @@ locals {
   iap_agent        = "service-${local.project_number}@gcp-sa-iap.iam.gserviceaccount.com"
   registry_agent   = "service-${local.project_number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
 
-  docker_hub          = contains(["docker.io", "index.docker.io", "registry-1.docker.io"], var.container_registry_url)
-  private_registry    = var.registry_credentials_secret_id != ""
-  registry_secret     = startswith(var.registry_credentials_secret_id, "projects/") ? var.registry_credentials_secret_id : "projects/${var.project_id}/secrets/${var.registry_credentials_secret_id}"
-  image_repository    = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
-  plain_env           = merge(var.app_settings, var.trace_env_vars)
-  referenced_secrets  = toset([for v in values(var.secret_env_vars) : v.secret_id])
-  programmatic_access = var.auth_programmatic_client_id != ""
+  docker_hub         = contains(["docker.io", "index.docker.io", "registry-1.docker.io"], var.container_registry_url)
+  private_registry   = var.registry_credentials_secret_id != ""
+  registry_secret    = startswith(var.registry_credentials_secret_id, "projects/") ? var.registry_credentials_secret_id : "projects/${var.project_id}/secrets/${var.registry_credentials_secret_id}"
+  image_repository   = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
+  plain_env          = merge(var.app_settings, var.trace_env_vars)
+  referenced_secrets = toset([for v in values(var.secret_env_vars) : v.secret_id])
 
-  custom_domain = var.app_fqdn != ""
-  lb_scheme     = var.internal ? "INTERNAL_MANAGED" : "EXTERNAL_MANAGED"
+  custom_domain  = var.app_fqdn != ""
+  app_url        = local.custom_domain ? "https://${var.app_fqdn}" : google_cloud_run_v2_service.this.uri
+  token_audience = "${local.app_url}/*"
+  lb_scheme      = var.internal ? "INTERNAL_MANAGED" : "EXTERNAL_MANAGED"
 }
 
 data "google_project" "this" {
@@ -277,18 +278,6 @@ resource "google_service_account_iam_member" "test_identity_token_creator" {
   service_account_id = google_service_account.test_identity.name
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = each.value
-}
-
-resource "google_iap_settings" "this" {
-  count = local.programmatic_access ? 1 : 0
-
-  name = "projects/${local.project_number}/iap_web/cloud_run-${var.region}/services/${google_cloud_run_v2_service.this.name}"
-
-  access_settings {
-    oauth_settings {
-      programmatic_clients = [var.auth_programmatic_client_id]
-    }
-  }
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
