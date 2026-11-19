@@ -4,7 +4,7 @@ locals {
   base_labels = merge(var.labels, {
     application = lower(var.name)
     environment = var.environment
-    managed-by  = "terraform"
+    managed-by  = "opentofu"
     platform    = "platform-engineering"
   })
 
