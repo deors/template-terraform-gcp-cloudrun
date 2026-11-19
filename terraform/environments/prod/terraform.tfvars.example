@@ -1,0 +1,23 @@
+gcp_project_id = "my-project-id"
+gcp_region     = "europe-west1" # deployment region — distinct from the tfstate bucket location set at init
+app_name       = "myapp"
+
+# Image path without the registry host; pulled through an Artifact Registry
+# remote repository that proxies container_registry_url.
+container_registry_url = "ghcr.io"
+container_image        = "deors/template-helloworld-express:latest"
+
+# Root domain with a public Cloud DNS zone in the project. The app is also
+# served at myapp.prod.<main_domain>, resolvable only inside the VPC.
+# Use "" for the run.app URL only.
+main_domain = "example.com"
+
+# People and groups allowed through IAP (browser sign-in).
+auth_members = ["group:myapp-developers@example.com"]
+
+# Identities allowed to sign tokens as the end-to-end test identity.
+auth_test_identity_impersonators = ["serviceAccount:ci-deployer@my-project-id.iam.gserviceaccount.com"]
+
+app_settings = {
+  NODE_ENV = "production"
+}
