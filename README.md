@@ -49,12 +49,18 @@ next to the Terraform that defines the expectations (**TBC**, …), the orchestr
 any infra template that exposes `scripts/verify.sh` plugs in without changing
 the platform.
 
-The script reads `APP_NAME` and `ENVIRONMENT`, queries GCP with **TBC**, and
-exits non-zero if any check fails. To run it locally against a deployed
+The script requires `APP_NAME`, `ENVIRONMENT` (`dev`/`staging`/`prod`),
+`GCP_PROJECT` and `GCP_REGION` (no fallback to the ambient gcloud
+configuration); `MAIN_DOMAIN` is optional and adds the certificate and DNS
+checks. It uses `gcloud` and `jq` only. Exit codes: `0` all checks passed, `1`
+at least one failed, `2` invalid invocation. Every exit path writes
+`/tmp/verify-summary.txt` (override with `VERIFY_SUMMARY_FILE`) with
+`environment=`, `passed=` and `failed=` lines, and appends a markdown summary to
+`GITHUB_STEP_SUMMARY` when set. To run it locally against a deployed
 environment (a `gcloud auth login` session must be active):
 
 ```bash
-APP_NAME=<app> ENVIRONMENT=<env> bash scripts/verify.sh
+APP_NAME=<app> ENVIRONMENT=<env> GCP_PROJECT=<project> GCP_REGION=<region> bash scripts/verify.sh
 ```
 
 ---
